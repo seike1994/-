@@ -12,7 +12,7 @@ Public Class Class_Jv_Link
     Sub Jv_Link_Init()
         Dim sid As String
         Dim lReturnCode As Long
-        '引数設定
+        '引数設定d
         sid = "Test"
         'JVLink 初期化
         lReturnCode = Me.AxJVLink1.JVInit(sid)
@@ -53,187 +53,7 @@ Public Class Class_Jv_Link
         Dim fromtime As String = time.ToString("yyyyMMdd")
         Return AxJVLink1.JVRTOpen(dataID, fromtime)
     End Function
-    Sub getRaceData(time As DateTime)
-        TopReset()
-        If JvRTOpenRaceData("0B15", time) = 0 Then
-            Dim ReturnCode As Long
-            Dim RaceInfo As JV_RA_RACE
-            Dim kai As String
-            Dim niti As String
-            Dim hassoTime As String
-            Dim tc As Integer = 1
-            Dim raceNum As Integer
-            Dim mmddDate
-            mmddDate = time.ToString("MMdd")
-            Dim loopCount As Integer = 0
 
-            Do
-                ReturnCode = AxJVLink1.JVRead(buff, buffSize, fName)
-                Select Case ReturnCode
-                    Case Is > 0 ' 正常
-                        If Mid(buff, 1, 2) = "RA" Then
-                            RaceInfo.SetData(buff)
-                            Dim Code = RaceInfo.id.JyoCD
-                            kai = RaceInfo.id.Kaiji
-                            niti = RaceInfo.id.Nichiji
-
-                            kai = Replace(kai, "0", "")
-                            If niti < 10 Then
-                                niti = Replace(niti, "0", "")
-                            End If
-
-                            kaisai = getChangeKaisai(Code)
-                            hassoTime = RaceInfo.HassoTime
-                            hassoTime = hassoTime.Insert(2, ":")
-                            raceNum = RaceInfo.id.RaceNum
-                            Dim mmddDateJv As String
-                            mmddDateJv = RaceInfo.id.MonthDay
-                            If mmddDate < mmddDateJv Then
-                                GoTo readEnd
-                            End If
-
-
-                            If mmddDate = mmddDateJv Then
-                                Dim currentTable As DataTable
-                                If loopCount = 0 Then
-                                    Class_MainForm.kaisai1.Text = kai & "回 " & kaisai & " " & niti & "日"
-                                    currentTable = dayDgvTable1
-                                    loopCount = 1
-                                ElseIf Class_MainForm.kaisai1.Text <> kai & "回 " & kaisai & " " & niti & "日" And loopCount = 1 Then
-                                    Class_MainForm.kaisai2.Text = kai & "回 " & kaisai & " " & niti & "日"
-                                    currentTable = dayDgvTable2
-                                    loopCount = 2
-                                ElseIf loopCount = 2 And Class_MainForm.kaisai2.Text <> kai & "回 " & kaisai & " " & niti & "日" Then
-                                    Class_MainForm.kaisai3.Text = kai & "回 " & kaisai & " " & niti & "日"
-                                    currentTable = dayDgvTable3
-                                    loopCount = 3
-                                End If
-
-                                ' 現在のDataTableに行を追加
-                                For i = currentTable.Rows.Count To 11
-                                    Dim newRow As DataRow = currentTable.NewRow()
-                                    newRow(0) = i + 1
-                                    currentTable.Rows.Add(newRow)
-                                Next i
-
-                                ' hassoTimeの設定
-                                If tc < 13 Then
-                                    dayDgvTable1.Rows(raceNum - 1)(2) = hassoTime
-                                    dayDgvTable1.Rows(raceNum - 1)(1) = "9"
-                                ElseIf tc > 12 And tc < 25 Then
-                                    dayDgvTable2.Rows(raceNum - 1)(2) = hassoTime
-                                    dayDgvTable2.Rows(raceNum - 1)(1) = "9"
-                                ElseIf tc > 24 And tc < 37 Then
-                                    dayDgvTable3.Rows(raceNum - 1)(2) = hassoTime
-                                    dayDgvTable3.Rows(raceNum - 1)(1) = "9"
-                                End If
-                                tc += 1
-                            End If
-                        End If
-
-
-                    Case -1
-     '何もしない
-                    Case 0 ' 読込終了
-                        Exit Do
-                    Case Else ' エラー
-                        logTxt += "JVReadエラー:" & ReturnCode & ControlChars.CrLf
-                        Dim LineMsg = "JVReadエラー:" & ReturnCode
-                        If postEr = True Then
-                            postLine(LineMsg)
-                        End If
-                        Exit Do
-                End Select
-            Loop
-readEnd:
-            Dim dgvCount = 0
-            Dim dgv
-            If tc > 10 Then
-                dgvCount = 2
-                If tc > 30 Then
-                    dgvCount = 3
-                End If
-                For i = 1 To dgvCount
-                    Dim dgvTable As DataTable = If(i = 1, dayDgvTable1, If(i = 2, dayDgvTable2, dayDgvTable3))
-                    Dim totalRow As DataRow = dgvTable.NewRow()
-                    totalRow(2) = "合計"
-                    totalRow(0) = "---"
-                    totalRow(1) = "---"
-                    totalRow(3) = 0
-                    totalRow(4) = 0
-                    totalRow(5) = 0
-                    totalRow(6) = "0%"
-                    dgvTable.Rows.Add(totalRow)
-                Next i
-
-            End If
-
-            ' JVClose
-            ReturnCode = AxJVLink1.JVClose()
-            changeDgvColor()
-        End If
-    End Sub
-
-    Sub getHassoTime()
-        Dim time As DateTime = Now
-        If JvRTOpenRaceData("0B15", time) = 0 Then
-            Dim ReturnCode As Integer
-            Dim RaceInfo As JV_RA_RACE
-            Dim hassoTime As String
-            Dim loopCount As Integer = 0
-            Dim raceNum As Integer
-            Dim mmddDate
-            mmddDate = Now.ToString("MMdd")
-
-            loopCount = 1
-            Do
-                ReturnCode = AxJVLink1.JVRead(buff, buffSize, fName)
-                Select Case ReturnCode
-                    Case Is > 0
-                        If Mid(buff, 1, 2) = "RA" Then
-                            RaceInfo.SetData(buff)
-                            hassoTime = RaceInfo.HassoTime
-                            hassoTime = hassoTime.Insert(2, ":")
-                            raceNum = RaceInfo.id.RaceNum
-                            Dim mmddDateJv As String
-                            mmddDateJv = RaceInfo.id.MonthDay
-                            If mmddDate < mmddDateJv Then
-                                GoTo endclose
-                            End If
-                            If mmddDate = mmddDateJv Then
-
-                                If loopCount < 13 Then
-                                    dayDgvTable1.Rows(raceNum - 1)(2) = hassoTime
-                                End If
-                                If loopCount > 12 And loopCount < 25 Then
-                                    dayDgvTable2(raceNum - 1)(2) = hassoTime
-                                End If
-                                If loopCount > 24 And loopCount < 37 Then
-                                    dayDgvTable3.Rows(raceNum - 1)(2) = hassoTime
-                                End If
-                                loopCount = loopCount + 1
-                            End If
-                        End If
-                    Case -1
-     '何もしない
-                    Case 0 ' 読込終了
-                        Exit Do
-                    Case Else ' エラー
-                        Dim LineMsg = "JVReadエラー:" & ReturnCode
-                        If postEr = True Then
-                            postLine(LineMsg)
-                        End If
-                        Exit Do
-                End Select
-            Loop
-endclose:
-
-
-            ' JVClose
-            ReturnCode = AxJVLink1.JVClose()
-
-        End If
-    End Sub
 
     Function getTansyoOdds()
         If JvRTOpens("0B31") = 0 Then
@@ -264,9 +84,6 @@ endclose:
                                     tansyoNinki = "0"
                                 Else
                                     tansyoOdds /= 10
-                                    tansyoNinkiArray.Add(tansyoNinki)
-                                    tansyoUmabanArray.Add(tansyoUmaban)
-                                    tansyoOddsArray.Add(tansyoOdds)
                                     tansyoDictionary.Add(Int(tansyoUmaban), CDbl(tansyoOdds))
                                 End If
                             Next i
@@ -328,9 +145,6 @@ endclose:
                                     fukusyoNinki = "0"
                                 Else
                                     fukusyoOdds /= 10
-                                    fukusyoNinkiArray.Add(fukusyoNinki)
-                                    fukusyoUmabanArray.Add(fukusyoUmaban)
-                                    fukusyoOddsArray.Add(fukusyoOdds)
                                     fukusyoDictionary.Add(fukusyoUmaban, CDbl(fukusyoOdds))
                                 End If
                             Next i
@@ -391,9 +205,6 @@ endclose:
                                 Else
                                     wakurenKumi = wakurenKumi.Substring(0, 1) & "-" & wakurenKumi.Substring(1)
                                     wakurenOdds /= 10
-                                    wakurenNinkiArray.Add(wakurenNinki)
-                                    wakurenUmabanArray.Add(wakurenKumi)
-                                    wakurenOddsArray.Add(wakurenOdds)
                                     wakurenDictionary.Add(wakurenKumi, CDbl(wakurenOdds))
                                 End If
                             Next i
@@ -454,9 +265,6 @@ endclose:
                                 Else
                                     umarenKumi = umarenKumi.Substring(0, 2) & "-" & umarenKumi.Substring(2)
                                     umarenOdds /= 10
-                                    umarenNinkiArray.Add(umarenNinki)
-                                    umarenUmabanArray.Add(umarenKumi)
-                                    umarenOddsArray.Add(umarenOdds)
                                     umarenDictionary.Add(umarenKumi, CDbl(umarenOdds))
                                 End If
                             Next i
@@ -517,9 +325,6 @@ endclose:
                                 Else
                                     wideKumi = wideKumi.Substring(0, 2) & "-" & wideKumi.Substring(2)
                                     wideOdds /= 10
-                                    wideNinkiArray.Add(wideNinki)
-                                    wideUmabanArray.Add(wideKumi)
-                                    wideOddsArray.Add(wideOdds)
                                     wideDictionary.Add(wideKumi, CDbl(wideOdds))
                                 End If
                             Next i
@@ -580,8 +385,6 @@ endclose:
                                 Else
                                     umatanKumi = umatanKumi.Substring(0, 2) & "-" & umatanKumi.Substring(2)
                                     umatanOdds /= 10
-                                    umatanNinkiArray.Add(umatanNinki)
-                                    umatanUmabanArray.Add(umatanKumi)
                                     umatanOddsArray.Add(umatanOdds)
                                     umatanDictionary.Add(umatanKumi, CDbl(umatanOdds))
                                 End If
@@ -1316,6 +1119,188 @@ endclose:
         End If
         Return allBabaTenkoDictionary
     End Function
+
+    Sub getRaceData(time As DateTime)
+        TopReset()
+        If JvRTOpenRaceData("0B15", time) = 0 Then
+            Dim ReturnCode As Long
+            Dim RaceInfo As JV_RA_RACE
+            Dim kai As String
+            Dim niti As String
+            Dim hassoTime As String
+            Dim tc As Integer = 1
+            Dim raceNum As Integer
+            Dim mmddDate
+            mmddDate = time.ToString("MMdd")
+            Dim loopCount As Integer = 0
+
+            Do
+                ReturnCode = AxJVLink1.JVRead(buff, buffSize, fName)
+                Select Case ReturnCode
+                    Case Is > 0 ' 正常
+                        If Mid(buff, 1, 2) = "RA" Then
+                            RaceInfo.SetData(buff)
+                            Dim Code = RaceInfo.id.JyoCD
+                            kai = RaceInfo.id.Kaiji
+                            niti = RaceInfo.id.Nichiji
+
+                            kai = Replace(kai, "0", "")
+                            If niti < 10 Then
+                                niti = Replace(niti, "0", "")
+                            End If
+
+                            kaisai = getChangeKaisai(Code)
+                            hassoTime = RaceInfo.HassoTime
+                            hassoTime = hassoTime.Insert(2, ":")
+                            raceNum = RaceInfo.id.RaceNum
+                            Dim mmddDateJv As String
+                            mmddDateJv = RaceInfo.id.MonthDay
+                            If mmddDate < mmddDateJv Then
+                                GoTo readEnd
+                            End If
+
+
+                            If mmddDate = mmddDateJv Then
+                                Dim currentTable As DataTable
+                                If loopCount = 0 Then
+                                    Class_MainForm.kaisai1.Text = kai & "回 " & kaisai & " " & niti & "日"
+                                    currentTable = dayDgvTable1
+                                    loopCount = 1
+                                ElseIf Class_MainForm.kaisai1.Text <> kai & "回 " & kaisai & " " & niti & "日" And loopCount = 1 Then
+                                    Class_MainForm.kaisai2.Text = kai & "回 " & kaisai & " " & niti & "日"
+                                    currentTable = dayDgvTable2
+                                    loopCount = 2
+                                ElseIf loopCount = 2 And Class_MainForm.kaisai2.Text <> kai & "回 " & kaisai & " " & niti & "日" Then
+                                    Class_MainForm.kaisai3.Text = kai & "回 " & kaisai & " " & niti & "日"
+                                    currentTable = dayDgvTable3
+                                    loopCount = 3
+                                End If
+
+                                ' 現在のDataTableに行を追加
+                                For i = currentTable.Rows.Count To 11
+                                    Dim newRow As DataRow = currentTable.NewRow()
+                                    newRow(0) = i + 1
+                                    currentTable.Rows.Add(newRow)
+                                Next i
+
+                                ' hassoTimeの設定
+                                If tc < 13 Then
+                                    dayDgvTable1.Rows(raceNum - 1)(2) = hassoTime
+                                    dayDgvTable1.Rows(raceNum - 1)(1) = "9"
+                                ElseIf tc > 12 And tc < 25 Then
+                                    dayDgvTable2.Rows(raceNum - 1)(2) = hassoTime
+                                    dayDgvTable2.Rows(raceNum - 1)(1) = "9"
+                                ElseIf tc > 24 And tc < 37 Then
+                                    dayDgvTable3.Rows(raceNum - 1)(2) = hassoTime
+                                    dayDgvTable3.Rows(raceNum - 1)(1) = "9"
+                                End If
+                                tc += 1
+                            End If
+                        End If
+
+
+                    Case -1
+     '何もしない
+                    Case 0 ' 読込終了
+                        Exit Do
+                    Case Else ' エラー
+                        logTxt += "JVReadエラー:" & ReturnCode & ControlChars.CrLf
+                        Dim LineMsg = "JVReadエラー:" & ReturnCode
+                        If postEr = True Then
+                            postLine(LineMsg)
+                        End If
+                        Exit Do
+                End Select
+            Loop
+readEnd:
+            Dim dgvCount = 0
+            Dim dgv
+            If tc > 10 Then
+                dgvCount = 2
+                If tc > 30 Then
+                    dgvCount = 3
+                End If
+                For i = 1 To dgvCount
+                    Dim dgvTable As DataTable = If(i = 1, dayDgvTable1, If(i = 2, dayDgvTable2, dayDgvTable3))
+                    Dim totalRow As DataRow = dgvTable.NewRow()
+                    totalRow(2) = "合計"
+                    totalRow(0) = "---"
+                    totalRow(1) = "---"
+                    totalRow(3) = 0
+                    totalRow(4) = 0
+                    totalRow(5) = 0
+                    totalRow(6) = "0%"
+                    dgvTable.Rows.Add(totalRow)
+                Next i
+
+            End If
+
+            ' JVClose
+            ReturnCode = AxJVLink1.JVClose()
+            changeDgvColor()
+        End If
+    End Sub
+
+    Sub getHassoTime()
+        Dim time As DateTime = Now
+        If JvRTOpenRaceData("0B15", time) = 0 Then
+            Dim ReturnCode As Integer
+            Dim RaceInfo As JV_RA_RACE
+            Dim hassoTime As String
+            Dim loopCount As Integer = 0
+            Dim raceNum As Integer
+            Dim mmddDate
+            mmddDate = Now.ToString("MMdd")
+
+            loopCount = 1
+            Do
+                ReturnCode = AxJVLink1.JVRead(buff, buffSize, fName)
+                Select Case ReturnCode
+                    Case Is > 0
+                        If Mid(buff, 1, 2) = "RA" Then
+                            RaceInfo.SetData(buff)
+                            hassoTime = RaceInfo.HassoTime
+                            hassoTime = hassoTime.Insert(2, ":")
+                            raceNum = RaceInfo.id.RaceNum
+                            Dim mmddDateJv As String
+                            mmddDateJv = RaceInfo.id.MonthDay
+                            If mmddDate < mmddDateJv Then
+                                GoTo endclose
+                            End If
+                            If mmddDate = mmddDateJv Then
+
+                                If loopCount < 13 Then
+                                    dayDgvTable1.Rows(raceNum - 1)(2) = hassoTime
+                                End If
+                                If loopCount > 12 And loopCount < 25 Then
+                                    dayDgvTable2(raceNum - 1)(2) = hassoTime
+                                End If
+                                If loopCount > 24 And loopCount < 37 Then
+                                    dayDgvTable3.Rows(raceNum - 1)(2) = hassoTime
+                                End If
+                                loopCount = loopCount + 1
+                            End If
+                        End If
+                    Case -1
+     '何もしない
+                    Case 0 ' 読込終了
+                        Exit Do
+                    Case Else ' エラー
+                        Dim LineMsg = "JVReadエラー:" & ReturnCode
+                        If postEr = True Then
+                            postLine(LineMsg)
+                        End If
+                        Exit Do
+                End Select
+            Loop
+endclose:
+
+
+            ' JVClose
+            ReturnCode = AxJVLink1.JVClose()
+
+        End If
+    End Sub
 
     Private Sub Jv_Link_Load(sender As Object, e As EventArgs) Handles MyBase.Load
 

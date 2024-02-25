@@ -768,19 +768,19 @@ Partial Class Class_MainForm
         'JvLink設定JToolStripMenuItem
         '
         Me.JvLink設定JToolStripMenuItem.Name = "JvLink設定JToolStripMenuItem"
-        Me.JvLink設定JToolStripMenuItem.Size = New System.Drawing.Size(180, 22)
+        Me.JvLink設定JToolStripMenuItem.Size = New System.Drawing.Size(150, 22)
         Me.JvLink設定JToolStripMenuItem.Text = "Jv-Link設定(&J)"
         '
         '競馬場共通設定RToolStripMenuItem
         '
         Me.競馬場共通設定RToolStripMenuItem.Name = "競馬場共通設定RToolStripMenuItem"
-        Me.競馬場共通設定RToolStripMenuItem.Size = New System.Drawing.Size(180, 22)
+        Me.競馬場共通設定RToolStripMenuItem.Size = New System.Drawing.Size(150, 22)
         Me.競馬場共通設定RToolStripMenuItem.Text = "IPAT設定(&I)"
         '
         'SQLServer設定SToolStripMenuItem
         '
         Me.SQLServer設定SToolStripMenuItem.Name = "SQLServer設定SToolStripMenuItem"
-        Me.SQLServer設定SToolStripMenuItem.Size = New System.Drawing.Size(180, 22)
+        Me.SQLServer設定SToolStripMenuItem.Size = New System.Drawing.Size(150, 22)
         Me.SQLServer設定SToolStripMenuItem.Text = "ユーザー設定(&U)"
         '
         'MenuStrip1
